@@ -55,6 +55,19 @@ const getMaxYValue = (dataPoints, yScaleDataKey, outlierPercentage) => {
     : maxYValue;
 };
 
+const getMinYValue = (dataPoints, yScaleDataKey, outlierPercentage) => {
+  const meanValue =
+    dataPoints.reduce((d, t) => d + t, 0) / dataPoints.length;
+  const minYValue = Math.min(...dataPoints);
+
+  return outlierPercentage !== null
+    ? Math.max(
+      minYValue,
+      (meanValue * (outlierPercentage / 100)) + meanValue,
+    )
+    : minYValue;
+};
+
 class BpkBarchart extends Component {
   constructor(props) {
     super(props);
@@ -133,11 +146,13 @@ class BpkBarchart extends Component {
     const width = this.state.width - margin.left - margin.right;
     const height = this.state.height - margin.bottom - margin.top;
     const maxYValue = getMaxYValue(data.map(d => d[yScaleDataKey]), yScaleDataKey, outlierPercentage);
+    const minYValue = getMinYValue(data.map(d => d[yScaleDataKey]), yScaleDataKey, outlierPercentage);
+    const rangeStart = minYValue < 0 ? minYValue : 0;
 
     this.xScale.rangeRound([0, width]);
     this.xScale.domain(transformedData.map(d => d[xScaleDataKey]));
     this.yScale.rangeRound([height, 0]);
-    this.yScale.domain([0, maxYValue]);
+    this.yScale.domain([rangeStart, maxYValue]);
 
     return (
       <BpkMobileScrollContainer>
@@ -197,6 +212,7 @@ class BpkBarchart extends Component {
               xScaleDataKey={xScaleDataKey}
               yScaleDataKey={yScaleDataKey}
               maxYValue={maxYValue}
+              minYValue={minYValue}
               outerPadding={showGridlines ? undefined : 0}
               onBarClick={onBarClick}
               onBarHover={onBarHover}
