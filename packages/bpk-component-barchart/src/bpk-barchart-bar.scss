@@ -42,7 +42,13 @@
     shape-rendering: auto;
 
     &--outlier {
-      mask: url(#bpk-barchart__def-mask);
+      &-north {
+        mask: url(#bpk-barchart__def-north-mask);
+      }
+
+      &-south {
+        mask: url(#bpk-barchart__def-south-mask);
+      }
     }
   }
 

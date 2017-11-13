@@ -23,29 +23,35 @@ import { remToPx } from './utils';
 
 const borderRadius = remToPx(borderRadiusXs);
 
-const getYPos = (point, { yScale, yScaleDataKey, maxYValue }) => {
-  const value = Math.abs(point[yScaleDataKey]);
+const getYPos = (point, {
+  yScale, yScaleDataKey, maxYValue,
+}) => {
+  const value = point[yScaleDataKey];
+  if (value < 0) {
+    return yScale(0);
+  }
+
   return yScale(Math.min(value, maxYValue));
 };
 
 const getBarHeight = (
   point,
-  belowZero,
+  zeroPos,
   {
-    height, margin, yScale, yScaleDataKey, maxYValue,
+    yScale, yScaleDataKey, maxYValue, minYValue,
   },
 ) => {
-  const barHeight =
-    height -
-    belowZero -
-    margin.top -
-    margin.bottom -
-    getYPos(point, { yScale, yScaleDataKey, maxYValue });
-  return Math.max(barHeight, 0);
+  const value = point[yScaleDataKey];
+
+  if (value < 0) {
+    return yScale(Math.max(minYValue, value)) - zeroPos;
+  }
+
+  return zeroPos - yScale(Math.min(maxYValue, value));
 };
 
-const isOutlier = (point, { yScaleDataKey, maxYValue }) =>
-  point[yScaleDataKey] > maxYValue;
+const isOutlier = (point, { yScaleDataKey, maxYValue, minYValue }) =>
+  point[yScaleDataKey] > maxYValue || point[yScaleDataKey] < minYValue;
 
 const BpkBarchartBars = (props) => {
   const {
@@ -76,25 +82,20 @@ const BpkBarchartBars = (props) => {
 
   const barWidth = xScale.bandwidth();
   const zeroPos = yScale(0);
-  const minYPos = yScale(minYValue);
-  const belowZero = minYValue < 0 ? (minYPos - zeroPos) : 0;
-
   return (
     <g>
       {data.map((point, i) => {
         const x = xScale(point[xScaleDataKey]);
-        let y = getYPos(point, { yScale, yScaleDataKey, maxYValue });
+        const y = getYPos(point, { yScale, yScaleDataKey, maxYValue });
         const outlier = isOutlier(point, props);
-        const barHeight = getBarHeight(point, belowZero, props);
-        if (point[yScaleDataKey] < 0) {
-          y += barHeight;
-        }
+        const barHeight = getBarHeight(point, zeroPos, props);
+        const isNegative = point[yScaleDataKey] < 0;
 
         return (
           <BarComponent
             key={`bar${i.toString()}`}
             x={x}
-            y={outlier ? y - borderRadius : y}
+            y={y}
             width={barWidth}
             height={outlier ? barHeight + borderRadius : barHeight}
             label={getBarLabel(point, xScaleDataKey, yScaleDataKey)}
@@ -104,6 +105,7 @@ const BpkBarchartBars = (props) => {
             onTouch={onBarTouch ? e => onBarTouch(e, { point }) : null}
             selected={getBarSelection(point)}
             padding={innerPadding}
+            isNegative={isNegative}
             {...rest}
           />
         );

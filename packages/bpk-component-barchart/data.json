@@ -98,5 +98,55 @@
       "month": "Dec",
       "price": 601
     }
+  ],
+  "prices3": [
+    {
+      "month": "Jan",
+      "price": -305
+    },
+    {
+      "month": "Feb",
+      "price": -348
+    },
+    {
+      "month": "Mar",
+      "price": -418
+    },
+    {
+      "month": "Apr",
+      "price": -148
+    },
+    {
+      "month": "May",
+      "price": -44
+    },
+    {
+      "month": "Jun",
+      "price": -322
+    },
+    {
+      "month": "Jul",
+      "price": -140
+    },
+    {
+      "month": "Aug",
+      "price": 15
+    },
+    {
+      "month": "Sep",
+      "price": 20
+    },
+    {
+      "month": "Oct",
+      "price": 30
+    },
+    {
+      "month": "Nov",
+      "price": 35
+    },
+    {
+      "month": "Dec",
+      "price": 147
+    }
   ]
 }

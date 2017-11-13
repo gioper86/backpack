@@ -54,6 +54,7 @@ const BpkBarchartBar = (props) => {
     outlier,
     selected,
     padding,
+    isNegative,
     ...rest
   } = props;
 
@@ -64,7 +65,10 @@ const BpkBarchartBar = (props) => {
   if (className) { classNames.push(className); }
   if (selected) { classNames.push(getClassName('bpk-barchart-bar--selected')); }
   if (onClick || onHover || onTouch) { classNames.push(getClassName('bpk-barchart-bar--interactive')); }
-  if (outlier) { rectClassNames.push(getClassName('bpk-barchart-bar__rect--outlier')); }
+  if (outlier) {
+    const hemisphere = isNegative ? 'south' : 'north';
+    rectClassNames.push(getClassName(`bpk-barchart-bar__rect--outlier-${hemisphere}`));
+  }
 
   const isAriaPressed = !!(onClick && selected);
   const rectPadding = width * (padding / 2);
@@ -108,6 +112,7 @@ BpkBarchartBar.propTypes = {
   width: PropTypes.number.isRequired,
   x: PropTypes.number.isRequired,
   y: PropTypes.number.isRequired,
+  isNegative: PropTypes.bool.isRequired,
   className: PropTypes.string,
   onClick: PropTypes.func,
   onHover: PropTypes.func,

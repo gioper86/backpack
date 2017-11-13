@@ -42,30 +42,16 @@ const getClassName = cssModules(STYLES);
 const spacing = remToPx(spacingXs);
 const lineHeight = remToPx(lineHeightSm);
 
-const getMaxYValue = (dataPoints, yScaleDataKey, outlierPercentage) => {
-  const meanValue =
-    dataPoints.reduce((d, t) => d + t, 0) / dataPoints.length;
+const getMaxYValue = (dataPoints, meanValue, outlierPercentage) => {
   const maxYValue = Math.max(...dataPoints);
-
-  return outlierPercentage !== null
-    ? Math.min(
-      maxYValue,
-      (meanValue * (outlierPercentage / 100)) + meanValue,
-    )
-    : maxYValue;
+  const threshold = (meanValue * (outlierPercentage / 100)) + Math.abs(meanValue);
+  return outlierPercentage !== null ? Math.min(maxYValue, threshold) : maxYValue;
 };
 
-const getMinYValue = (dataPoints, yScaleDataKey, outlierPercentage) => {
-  const meanValue =
-    dataPoints.reduce((d, t) => d + t, 0) / dataPoints.length;
+const getMinYValue = (dataPoints, meanValue, outlierPercentage) => {
   const minYValue = Math.min(...dataPoints);
-
-  return outlierPercentage !== null
-    ? Math.max(
-      minYValue,
-      (meanValue * (outlierPercentage / 100)) + meanValue,
-    )
-    : minYValue;
+  const threshold = (meanValue * (outlierPercentage / 100)) - Math.abs(meanValue);
+  return outlierPercentage !== null ? Math.max(minYValue, threshold) : minYValue;
 };
 
 class BpkBarchart extends Component {
@@ -145,15 +131,24 @@ class BpkBarchart extends Component {
 
     const width = this.state.width - margin.left - margin.right;
     const height = this.state.height - margin.bottom - margin.top;
-    const maxYValue = getMaxYValue(data.map(d => d[yScaleDataKey]), yScaleDataKey, outlierPercentage);
-    const minYValue = getMinYValue(data.map(d => d[yScaleDataKey]), yScaleDataKey, outlierPercentage);
+
+    const dataPoints = data.map(d => d[yScaleDataKey]);
+    const meanValue = dataPoints.reduce((d, t) => d + t, 0) / dataPoints.length;
+    const maxYValue = getMaxYValue(dataPoints, meanValue, outlierPercentage);
+    const minYValue = getMinYValue(dataPoints, meanValue, outlierPercentage);
+
+    const zeroPos = this.yScale(0);
+    const southernHemisphereHeight = this.yScale(minYValue) - zeroPos; // Fails on first render
+    const northernHemisphereHeight = zeroPos;
+
+    console.log(`MEAN ${meanValue} - MAX ${maxYValue} - MIN ${minYValue} -- HH ${southernHemisphereHeight}`);
+
     const rangeStart = minYValue < 0 ? minYValue : 0;
 
     this.xScale.rangeRound([0, width]);
     this.xScale.domain(transformedData.map(d => d[xScaleDataKey]));
     this.yScale.rangeRound([height, 0]);
     this.yScale.domain([rangeStart, maxYValue]);
-
     return (
       <BpkMobileScrollContainer>
         {!disableDataTable && <BpkChartDataTable
@@ -171,7 +166,10 @@ class BpkBarchart extends Component {
           ref={(svgEl) => { this.svgEl = svgEl; }}
           {...rest}
         >
-          <BpkBarchartDefs />
+          <BpkBarchartDefs
+            northernHemisphereHeight={northernHemisphereHeight}
+            southernHemisphereHeight={southernHemisphereHeight}
+          />
           <BpkChartMargin
             margin={margin}
           >
